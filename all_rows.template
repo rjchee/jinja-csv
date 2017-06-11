@@ -1,7 +1,0 @@
-{% for row in rows %}
-
-
-{% include row_template %}
-
-
-{% endfor %}

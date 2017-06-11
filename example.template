@@ -1,9 +1,14 @@
+{{ rows | castrange(['int', 'int'], 'Rating1', 'Rating2') }}
+{% set avgrating = (rows|sumcolumns(['Rating1', 'Rating2']))/(rows|length)/2 %}
+
+{% for row in rows|sortedby('Rating2') %}
+
 {# you can specify columns by both their name and their index #}
-Hello {{ row[0] }},
+Hello {{ row[0] }} {{ row['Last Name'] }},
 The {{ row['State'] }} branch of ACME Corporation would like to publish your comment "{{ row.Comments }}", which you provided in the Google Form in our latest publication, The ACME {{ row['State'] }} Times.
 
-{% if row['Rating1']|int < 5 %}
-Additionally, since you rated us less than a 5 on the Google Form, we would like to ask for feedback on what factors led to your this rating. This feedback will not be shared publicly.
+{% if row['Rating1']|int < avgrating %}
+Additionally, since you rated us less than the average rating of {{ avgrating }} on the Google Form, we would like to ask for feedback on what factors led to your this rating. This feedback will not be shared publicly.
 
 {% elif row['Rating1']|int >= 9 %}
 Additionally, since you gave us a high rating on the Google Form, we would like to ask for feedback on what we did well during your visit. This feedback will not be shared publicly.
@@ -12,3 +17,5 @@ Additionally, since you gave us a high rating on the Google Form, we would like 
 Thanks,
 Johnny Cossack
 CEO of ACME Corporation
+
+{% endfor %}
