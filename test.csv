@@ -2,9 +2,9 @@ First Name,Last Name,State,Comments,Something,Test Column,0,1,2,Rating1,Rating2
 Bob,Saratoga,Louisiana,eh,,test,25,100,31,0,10
 Joe,Clement,Alaska,blah,foo,bar,baz,n/a,,1,9
 Jefferson,Woolsworth,Iowa,Iowa,Iowa,Iowa,Iowa,Iowa,Iowa,2,8
-Robert,Smith,Kansas,'; DROP TABLE users; --,,,,,,3,7
+Robert,Smith,Kansas,', DROP TABLE users, --,,,,3,7
 Elias,Lee,Oregon,rah,rah,rah,ah,ah,ah,4,6
-Roman,Barnaby,Montana,abcdefghijklmnopqrstuvwxyz,111111111111111111111111111111,"a
+Roman,Barnaby,Montana,abcdefghijklmnopqrstuvwxyz,1.11111111111111E+029,"a
 newline
 yep",0,1,2,5,5
 Phil,Hodges,Massachussetts,"comma,separated,values",Something,,,,,6,4

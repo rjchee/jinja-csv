@@ -1,4 +1,3 @@
-{{ rows | castrange(['int', 'int'], 'Rating1', 'Rating2') }}
 {% set avgrating = (rows|sumcolumns(['Rating1', 'Rating2']))/(rows|length)/2 %}
 
 {% for row in rows|sortedby('Rating2') %}
