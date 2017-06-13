@@ -19,6 +19,12 @@ class CSVRow(dict):
     def popitem(self):
         raise NotImplementedError()
 
+    def clear(self):
+        raise NotImplementedError()
+
+    def update(self, arg, **kwargs):
+        raise NotImplementedError()
+
     def iterator_at(self, start, end=None):
         if start is None:
             start = 0
@@ -33,7 +39,7 @@ class CSVRow(dict):
         return list(range(len(self)))
 
     def items(self):
-        return list((key, self[key]) for key in self)
+        return list((key, self[key]) for key in self.keys())
 
     def values(self):
         return list(iter(self))
