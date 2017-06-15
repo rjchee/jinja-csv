@@ -101,7 +101,9 @@ class CSVDictRow(CSVRow):
         return CSVDictRow(self.fieldnames, {field: val for field, val in zip(self.fieldnames, self.cast_row(filters))})
 
 
-def cast_to_bool(s):
+def cast_to_bool(s=None):
+    if s is None:
+        return False
     if isinstance(s, str):
         if s.lower() in ['true', 'yes']:
             return True
@@ -113,29 +115,26 @@ def cast_to_bool(s):
 
 
 def cast_order():
-    return [(int, 0), (float, 0.0), (cast_to_bool, False)]
+    return [int, float, cast_to_bool]
 
 class CSVModel:
     def __init__(self, rows, types=None):
         max_len = max(map(len, rows))
         if types is None:
             casts = cast_order()
-            types = [(str, '')]*max_len
+            types = [str]*max_len
             for i in range(max_len):
                 # try to find the most specific cast
-                for cast, zero in casts:
+                for cast in casts:
                     try:
                         list(map(cast, (row[i] for row in rows if i < len(row))))
                     except ValueError:
                         continue
-                    types[i] = (cast, zero)
+                    types[i] = cast
                     break
         self.rows = []
         for row in rows:
-            new_row = []
-            for i, type_data in enumerate(types):
-                cast, zero = type_data
-                new_row.append(cast(row[i]) if i < len(row) else zero)
+            new_row = [t(row[i]) if i < len(row) else t() for i, t in enumerate(types)]
             self.rows.append(CSVRow(new_row))
         self.num_cols = max_len
         self.num_rows = len(rows)
@@ -145,7 +144,7 @@ class CSVModel:
         new_rows = []
         for row in self.rows:
             new_rows.append(row.cast(filters))
-        return self(new_rows, types=[(f, '') for f in filters])
+        return self.__init__(new_rows, types=list(filters))
 
 
     def cast_range(self, filters, start, end):
@@ -157,9 +156,9 @@ class CSVModel:
             raise ValueError('Number of filters ({}) should match number of columns ({})!'.format(filterlen, rangelen))
         new_rows = []
         s_i = len(list(self.rows[0].iterator_at(0, start)))
-        new_filters = list(t[0] for t in self.types[:s_i])
+        new_filters = list(self.types[:s_i])
         new_filters.extend(filters)
-        new_filters.extend(t[0] for t in self.types[s_i+rangelen:])
+        new_filters.extend(self.types[s_i+rangelen:])
         return self.cast(new_filters)
 
     def __iter__(self):
@@ -182,22 +181,19 @@ class CSVDictModel(CSVModel):
     def __init__(self, fieldnames, rows, types=None):
         if types is None:
             casts = cast_order()
-            types = [(str, '')]*len(fieldnames)
+            types = [str]*len(fieldnames)
             for i, field in enumerate(fieldnames):
                 # try to find the most specific cast
-                for cast, zero in casts:
+                for t in casts:
                     try:
-                        list(map(cast, (row.get(field, zero) for row in rows)))
+                        list(map(t, (row.get(field, t()) for row in rows)))
                     except ValueError:
                         continue
-                    types[i] = (cast, zero)
+                    types[i] = t
                     break
         self.rows = []
         for row in rows:
-            new_row = {}
-            for field, type_data in zip(fieldnames, types):
-                cast, zero = type_data
-                new_row[field] = cast(row.get(field, zero))
+            new_row = {field: t(row.get(field, t())) for field, t in zip(fieldnames, types)}
             self.rows.append(CSVDictRow(fieldnames, new_row))
         self.fieldnames = fieldnames
         self.num_cols = len(fieldnames)
@@ -208,7 +204,7 @@ class CSVDictModel(CSVModel):
         new_rows = []
         for row in self.rows:
             new_rows.append(row.cast(filters))
-        return self.__init__(self.fieldnames, new_rows, types=list((f, '') for f in filters))
+        return self.__init__(self.fieldnames, new_rows, types=list(filters))
 
     @classmethod
     def from_file(cls, filename):
