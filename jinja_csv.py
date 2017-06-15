@@ -52,7 +52,7 @@ class CSVJinjaView:
 
 
 def sumrowrange(row, start=None, end=None, accumulator=0):
-    return sum(row.iterator_at(start, end), accumulator)
+    return sum(row[slice(start, end)], accumulator)
 
 
 def sumcolumns(rows, columns, accumulator=0):

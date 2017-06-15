@@ -1,42 +1,63 @@
 import unittest
 
 from csv_model import CSVRow
+from csv_model import CSVDictRow
 
 class TestCSVRow(unittest.TestCase):
 
     def setUp(self):
-        self.data = ['Hello', 'World', 1, '', '99']
+        self.data = ['Hello', 3.5, 1, '', '99']
         self.row = CSVRow(self.data)
     
-    def test_keys(self):
-        self.assertEqual(list(self.row.keys()), list(range(len(self.data))))
+    def test_iter(self):
+        self.assertEqual(list(self.row), self.data)
 
-    def test_items(self):
-        self.assertEqual(list(self.row.items()), list(enumerate(self.data)))
+    def test_contains(self):
+        for val in self.data:
+            self.assertIn(val, self.row)
 
-    def test_values(self):
-        self.assertEqual(list(self.row.values()), self.data)
+    def test_len(self):
+        self.assertEqual(len(self.row), len(self.data))
 
-    def test_modify(self):
-        """CSVRow should be read-only after construction
+    def test_get(self):
+        for i, val in enumerate(self.data):
+            self.assertEqual(self.row[i], val)
 
-        This test checks that errors are raised upon modification to the underlying.
-        """
-        
-        modify_funcs = [
-            (lambda r: r.__delitem__(0), 'del'),
-            (lambda r: r.__setitem__(0, 100), 'set'),
-            (lambda r: r.clear(), 'clear'),
-            (lambda r: r.pop(1), 'pop'),
-            (lambda r: r.popitem(), 'popitem'),
-            (lambda r: r.setdefault(100, 'test'), 'setdefault'),
-            (lambda r: r.update(list((a, a) for a in range(100))), 'update')
-        ]
+    def test_get_slice(self):
+        self.assertEqual(self.row[:3], ['Hello', 3.5, 1])
+        self.assertEqual(self.row[3:], ['', '99'])
+        self.assertEqual(self.row[1:3], [3.5, 1])
+        self.assertEqual(self.row[::2], ['Hello', 1, '99'])
+        self.assertEqual(self.row[1:5:2], [3.5, ''])
 
-        for f, name in modify_funcs:
-            err_msg = '{} should raise a NotImplementedError'.format(name)
-            with self.assertRaises(NotImplementedError, msg=err_msg):
-                f(self.row)
+    def test_eq(self):
+        self.assertEqual(self.row, self.data)
+
+    def test_cast(self):
+        self.assertEqual(self.row.cast([set, str, str, bool, int]),
+                                       [set(['H', 'e', 'l', 'o']), '3.5', '1', False, 99])
+        self.assertEqual(self.row.cast([bool]*len(self.data)), list(map(bool, self.data)))
+
+
+class TestCSVDictRow(TestCSVRow):
+
+    def setUp(self):
+        self.data = ['Hello', 3.5, 1, '', '99']
+        self.fields = ['Text', 'Score', 'Count', 'Comments', 'Rank']
+        self.row = CSVDictRow(self.fields, self.data)
+
+    def test_get(self):
+        super().test_get()
+        for field, val in zip(self.fields, self.data):
+            self.assertEqual(self.row[field], val)
+
+    def test_get_slice(self):
+        super().test_get_slice()
+        self.assertEqual(self.row[slice('Comments')], ['Hello', 3.5, 1])
+        self.assertEqual(self.row[slice('Comments', None)], ['', '99'])
+        self.assertEqual(self.row[slice('Score', 'Comments')], [3.5, 1])
+        self.assertEqual(self.row[slice('Text', 'Count')], ['Hello', 3.5])
+        self.assertEqual(self.row[slice('Score', 5, 2)], [3.5, ''])
 
 
 if __name__ == '__main__':
