@@ -61,6 +61,10 @@ class TestCSVDictRow(TestCSVRow):
         self.assertEqual(self.row[slice('Score', 5, 2)], [3.5, ''])
 
 
+def getValueTypeList(rows):
+    return list((item, type(item)) for row in rows for item in row)
+
+
 class TestCSVModel(unittest.TestCase):
 
     def setUp(self):
@@ -70,6 +74,10 @@ class TestCSVModel(unittest.TestCase):
             ['s', '3.14', '55', 's', 'false', 'yes'],
             ['eee', '4', '88', 'f', 'yes', 'NO']
         ]
+        self.model = CSVModel(self.data)
+
+    def assertCSVModelsAreEqual(self, m1, m2):
+        self.assertEqual(getValueTypeList(m1), getValueTypeList(m2))
 
     def test_autocast(self):
         expected_results = [
@@ -78,11 +86,18 @@ class TestCSVModel(unittest.TestCase):
             ['s', 3.14, 55, 's', 'false', True],
             ['eee', 4.0, 88, 'f', 'yes', False]
         ]
-        model = CSVModel(self.data)
-        for expected_row, row in zip(expected_results, model):
-            for expected_item, item in zip(expected_row, row):
-                self.assertEqual(expected_item, item)
-                self.assertEqual(type(expected_item), type(item))
+        self.assertCSVModelsAreEqual(expected_results, self.model)
+
+    def test_cast(self):
+        filters = [str, bool, float, len, lambda x:str(x)[0], int]
+        expected_results = [
+            ['Hello', True, 1.0, 0, '9', 1],
+            ['Bye', True, 0.0, 2, '9', 0],
+            ['s', True, 55.0, 1, 'f', 1],
+            ['eee', True, 88.0, 1, 'y', 0]
+        ]
+        model = self.model.cast(filters)
+        self.assertCSVModelsAreEqual(expected_results, model)
 
 if __name__ == '__main__':
     unittest.main()

@@ -34,6 +34,9 @@ class CSVRow(object):
             raise ValueError('number of filters does not match number of CSV columns; {} != {}'.format(len(filters), len(self)))
         return [f(v) for f, v in zip(filters, self)]
 
+    def __str__(self):
+        return str(self.data)
+
 
 class CSVDictRow(CSVRow):
     def __init__(self, fieldnames, row):
@@ -119,10 +122,7 @@ class CSVModel:
         return CSVRow(row)
 
     def cast(self, filters):
-        new_rows = []
-        for row in self.rows:
-            new_rows.append(row.cast(filters))
-        return self.__init__(new_rows, types=list(filters))
+        return CSVModel(self.rows, types=list(filters))
 
     def cast_range(self, filters, start=None, end=None):
         if not self.rows:
@@ -161,10 +161,7 @@ class CSVDictModel(CSVModel):
         return CSVDictRow(self.fieldnames, row)
 
     def cast(self, filters):
-        new_rows = []
-        for row in self.rows:
-            new_rows.append(row.cast(filters))
-        return self.__init__(self.fieldnames, new_rows, types=list(filters))
+        return CSVDictModel(self.fieldnames, new_rows, types=list(filters))
 
     @classmethod
     def from_file(cls, filename):
