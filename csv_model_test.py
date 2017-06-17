@@ -2,6 +2,7 @@ import unittest
 
 from csv_model import CSVRow
 from csv_model import CSVDictRow
+from csv_model import CSVModel
 
 class TestCSVRow(unittest.TestCase):
 
@@ -59,6 +60,29 @@ class TestCSVDictRow(TestCSVRow):
         self.assertEqual(self.row[slice('Text', 'Count')], ['Hello', 3.5])
         self.assertEqual(self.row[slice('Score', 5, 2)], [3.5, ''])
 
+
+class TestCSVModel(unittest.TestCase):
+
+    def setUp(self):
+        self.data = [
+            ['Hello', '3.5', '1', '', '99', 'True'],
+            ['Bye', '9', '0', 'eh', '9.5', 'false'],
+            ['s', '3.14', '55', 's', 'false', 'yes'],
+            ['eee', '4', '88', 'f', 'yes', 'NO']
+        ]
+
+    def test_autocast(self):
+        expected_results = [
+            ['Hello', 3.5, 1, '', '99', True],
+            ['Bye', 9.0, 0, 'eh', '9.5', False],
+            ['s', 3.14, 55, 's', 'false', True],
+            ['eee', 4.0, 88, 'f', 'yes', False]
+        ]
+        model = CSVModel(self.data)
+        for expected_row, row in zip(expected_results, model):
+            for expected_item, item in zip(expected_row, row):
+                self.assertEqual(expected_item, item)
+                self.assertEqual(type(expected_item), type(item))
 
 if __name__ == '__main__':
     unittest.main()

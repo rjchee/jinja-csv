@@ -7,9 +7,6 @@ class CSVRow(object):
     def __iter__(self):
         return iter(self.data)
 
-    def __contains__(self, val):
-        return val in self.data
-
     def __eq__(self, other):
         return hasattr(other, '__iter__') and self.data == list(other)
 
