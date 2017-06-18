@@ -2,6 +2,7 @@ import unittest
 
 from csv_model import CSVRow
 from csv_model import CSVDictRow
+from csv_model import CSVColumn
 from csv_model import CSVModel
 
 class TestCSVRow(unittest.TestCase):
@@ -23,13 +24,15 @@ class TestCSVRow(unittest.TestCase):
     def test_get(self):
         for i, val in enumerate(self.data):
             self.assertEqual(self.row[i], val)
+        self.assertEqual(self.row[-1], '99')
+        self.assertEqual(self.row[-3], 1)
 
     def test_get_slice(self):
-        self.assertEqual(self.row[:3], ['Hello', 3.5, 1])
-        self.assertEqual(self.row[3:], ['', '99'])
-        self.assertEqual(self.row[1:3], [3.5, 1])
-        self.assertEqual(self.row[::2], ['Hello', 1, '99'])
-        self.assertEqual(self.row[1:5:2], [3.5, ''])
+        self.assertEqual(self.row[:3], ('Hello', 3.5, 1))
+        self.assertEqual(self.row[3:], ('', '99'))
+        self.assertEqual(self.row[1:3], (3.5, 1))
+        self.assertEqual(self.row[::2], ('Hello', 1, '99'))
+        self.assertEqual(self.row[1:5:2], (3.5, ''))
 
     def test_eq(self):
         self.assertEqual(self.row, self.data)
@@ -54,11 +57,32 @@ class TestCSVDictRow(TestCSVRow):
 
     def test_get_slice(self):
         super().test_get_slice()
-        self.assertEqual(self.row[slice('Comments')], ['Hello', 3.5, 1])
-        self.assertEqual(self.row[slice('Comments', None)], ['', '99'])
-        self.assertEqual(self.row[slice('Score', 'Comments')], [3.5, 1])
-        self.assertEqual(self.row[slice('Text', 'Count')], ['Hello', 3.5])
-        self.assertEqual(self.row[slice('Score', 5, 2)], [3.5, ''])
+        self.assertEqual(self.row[slice('Comments')], ('Hello', 3.5, 1))
+        self.assertEqual(self.row[slice('Comments', None)], ('', '99'))
+        self.assertEqual(self.row[slice('Score', 'Comments')], (3.5, 1))
+        self.assertEqual(self.row[slice('Text', 'Count')], ('Hello', 3.5))
+        self.assertEqual(self.row[slice('Score', 5, 2)], (3.5, ''))
+
+
+class TestCSVColumn(unittest.TestCase):
+    def setUp(self):
+        self.data = list(range(5))
+        self.col = CSVColumn(self.data)
+
+    def test_get(self):
+        for i, val in enumerate(self.data):
+            self.assertEqual(self.col[i], val)
+        self.assertEqual(self.col[-1], 4)
+        self.assertEqual(self.col[-2], 3)
+
+    def test_get_slice(self):
+        self.assertEqual(self.col[:3], (0, 1, 2))
+        self.assertEqual(self.col[:10], (0, 1, 2, 3, 4))
+        self.assertEqual(self.col[2:], (2, 3, 4))
+        self.assertEqual(self.col[-3:], (2, 3, 4))
+        self.assertEqual(self.col[:-3], (0, 1))
+        self.assertEqual(self.col[1:3], (1, 2))
+        self.assertEqual(self.col[::2], (0, 2, 4))
 
 
 def getValueTypeList(rows):

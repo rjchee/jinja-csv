@@ -2,13 +2,13 @@ import csv
 
 class CSVRow(object):
     def __init__(self, row):
-        self.data = list(row)
+        self.data = tuple(row)
 
     def __iter__(self):
         return iter(self.data)
 
     def __eq__(self, other):
-        return hasattr(other, '__iter__') and self.data == list(other)
+        return hasattr(other, '__iter__') and self.data == tuple(other)
 
     def __len__(self):
         return len(self.data)
@@ -20,7 +20,7 @@ class CSVRow(object):
         if isinstance(idx, (int, slice)):
             try:
                 return self.data[idx]
-            except IndexError as e:
+            except IndexError:
                 raise IndexError('CSVRow index out of range')
         raise TypeError('CSVRow can only be indexed with integers or slices, not {}'.format(type(idx).__name__))
 
@@ -59,9 +59,10 @@ class CSVDictRow(CSVRow):
         if isinstance(idx, str):
             idx = self._getindex(idx)
         if isinstance(idx, int):
-            if idx < 0 or idx >= len(self):
+            try:
+                return self.data[idx]
+            except IndexError:
                 raise IndexError('CSVDictRow index out of range')
-            return self.data[idx]
         if not isinstance(idx, slice):
             msg = ('CSVDictRow can only be indexed with integers, fieldnames, '
                    'or slices, not {}').format(type(idx).__name__)
@@ -76,6 +77,32 @@ class CSVDictRow(CSVRow):
         if not filters:
             return self
         return CSVDictRow(self.fieldnames, self._cast_row(filters))
+
+
+class CSVColumn(object):
+    def __init__(self, col, name=None):
+        self.data = tuple(col)
+        self.fieldname = name
+
+    def __getitem__(self, idx):
+        return self.data[idx]
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __eq__(self, other):
+        return hasattr(other, '__iter__') and self.data == tuple(other)
+
+    def __len__(self):
+        return len(self.data)
+
+    def cast(self, filter_func):
+        return CSVColumn(filter(filter_func, self.data), name=self.fieldname)
+
+    def __str__(self):
+        if self.fieldname:
+            return '{}: {}'.format(self.fieldname, self.data)
+        return str(self.data)
 
 
 def cast_to_bool(s=None):
@@ -110,10 +137,13 @@ class CSVModel:
             raise ValueError(('number of given types ({}) should match '
                               'number of columns ({})!').format(len(types), max_len))
 
-        self.rows = []
+        self._rows = []
         for row in rows:
             new_row = [t(row[i]) if i < len(row) else t() for i, t in enumerate(types)]
-            self.rows.append(self._init_row(new_row))
+            self._rows.append(self._init_row(new_row))
+        self._cols = []
+        for i in range(max_len):
+            self._cols.append(self._init_col(i))
         self.num_cols = max_len
         self.num_rows = len(rows)
         self.types = types
@@ -121,35 +151,50 @@ class CSVModel:
     def _init_row(self, row):
         return CSVRow(row)
 
+    def _init_col(self, col_num):
+        return CSVColumn(row[col_num] for row in self._rows)
+
     def cast(self, filters):
-        return CSVModel(self.rows, types=list(filters))
+        return CSVModel(self._rows, types=tuple(filters))
 
     def cast_range(self, filters, start=None, end=None):
-        if not self.rows:
+        if not self._rows:
             return
         filterlen = len(filters)
-        csvrow = self.rows[0]
+        csvrow = self._rows[0]
         rangelen = len(csvrow[start:end])
         if rangelen != filterlen:
             raise ValueError('Number of filters ({}) should match number of columns ({})!'.format(filterlen, rangelen))
-        new_filters = list(types)
+        new_filters = tuple(types)
         new_filters[csvrow._getindex(start):csvrow._getindex(end)] = filters
         return self.cast(new_filters)
 
     def __iter__(self):
-        return iter(self.rows)
+        return iter(self._rows)
 
     def __len__(self):
         return self.num_rows
 
     def __reversed__(self):
-        return reversed(self.rows)
+        return reversed(self._rows)
+
+    def rows(self):
+        return tuple(self._rows)
+
+    def iterrows(self):
+        return iter(self._rows)
+
+    def cols(self):
+        return tuple(self._cols)
+
+    def itercols(self):
+        return iter(self._cols)
 
     @classmethod
     def from_file(cls, filename):
         with open(filename) as csvfile:
             reader = csv.reader(csvfile)
-            return cls(list(reader))
+            return cls(tuple(reader))
 
 
 class CSVDictModel(CSVModel):
@@ -160,8 +205,11 @@ class CSVDictModel(CSVModel):
     def _init_row(self, row):
         return CSVDictRow(self.fieldnames, row)
 
+    def _init_col(self, col_num):
+        return CSVColumn((row[col_num] for row in self._rows), name=self.fieldnames[col_num])
+
     def cast(self, filters):
-        return CSVDictModel(self.fieldnames, new_rows, types=list(filters))
+        return CSVDictModel(self.fieldnames, new_rows, types=tuple(filters))
 
     @classmethod
     def from_file(cls, filename):
@@ -169,7 +217,7 @@ class CSVDictModel(CSVModel):
             reader = csv.DictReader(csvfile)
             rows = []
             for row in reader:
-                rows.append(list(row[field] for field in reader.fieldnames))
+                rows.append(tuple(row[field] for field in reader.fieldnames))
             return cls(reader.fieldnames, rows)
 
 
