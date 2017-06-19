@@ -84,6 +84,22 @@ class TestCSVColumn(unittest.TestCase):
         self.assertEqual(self.col[1:3], (1, 2))
         self.assertEqual(self.col[::2], (0, 2, 4))
 
+    def test_str(self):
+        self.assertNotIn(':', str(self.col))
+
+        name = 'Test_Name'
+        col = CSVColumn(self.data, name=name)
+        self.assertIn(name, str(col))
+
+    def test_len(self):
+        self.assertEqual(len(self.col), 5)
+
+    def test_eq(self):
+        self.assertEqual(self.col, self.data)
+        self.assertEqual(self.col, range(5))
+        self.assertNotEqual(self.col, range(6))
+        self.assertNotEqual(self.col, [0, 3, 1, 2, 4])
+
 
 def getValueTypeList(rows):
     return list((item, type(item)) for row in rows for item in row)
