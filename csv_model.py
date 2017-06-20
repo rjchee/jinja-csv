@@ -55,7 +55,7 @@ class CSVDictRow(CSVRow):
     def _getindex(self, i):
         if isinstance(i, int):
             return i
-        return self._idx_map.get(i, len(self))
+        return self._idx_map[i]
 
     def _getslice(self, start, end, step=None):
         if start is None:
@@ -64,8 +64,9 @@ class CSVDictRow(CSVRow):
             start = self._getindex(start)
         if end is None:
             end = len(self)
-        else:
-            end = self._getindex(end)
+        elif isinstance(end, str):
+            end = self._idx_map.get(end)+1
+            
         return slice(start, end, step)
 
 
@@ -211,7 +212,7 @@ class CSVModel:
 class CSVDictModel(CSVModel):
     def __init__(self, fieldnames, rows, types=None):
         self.fieldnames = fieldnames
-        super().__init__(rows, types)
+        super().__init__(rows, types=types)
 
     def _init_row(self, row):
         return CSVDictRow(self.fieldnames, row)
@@ -220,7 +221,7 @@ class CSVDictModel(CSVModel):
         return CSVColumn((row[col_num] for row in self._rows), name=self.fieldnames[col_num])
 
     def cast(self, filters):
-        return CSVDictModel(self.fieldnames, new_rows, types=tuple(filters))
+        return CSVDictModel(self.fieldnames, self._rows, types=tuple(filters))
 
     @classmethod
     def from_file(cls, filename):

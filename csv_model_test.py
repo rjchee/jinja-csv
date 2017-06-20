@@ -4,6 +4,7 @@ from csv_model import CSVRow
 from csv_model import CSVDictRow
 from csv_model import CSVColumn
 from csv_model import CSVModel
+from csv_model import CSVDictModel
 
 class TestCSVRow(unittest.TestCase):
 
@@ -50,17 +51,15 @@ class TestCSVDictRow(TestCSVRow):
         self.fields = ['Text', 'Score', 'Count', 'Comments', 'Rank']
         self.row = CSVDictRow(self.fields, self.data)
 
-    def test_get(self):
-        super().test_get()
+    def test_get_fieldnames(self):
         for field, val in zip(self.fields, self.data):
             self.assertEqual(self.row[field], val)
 
-    def test_get_slice(self):
-        super().test_get_slice()
-        self.assertEqual(self.row[slice('Comments')], ('Hello', 3.5, 1))
+    def test_get_slice_fieldnames(self):
+        self.assertEqual(self.row[slice('Comments')], ('Hello', 3.5, 1, ''))
         self.assertEqual(self.row[slice('Comments', None)], ('', '99'))
-        self.assertEqual(self.row[slice('Score', 'Comments')], (3.5, 1))
-        self.assertEqual(self.row[slice('Text', 'Count')], ('Hello', 3.5))
+        self.assertEqual(self.row[slice('Score', 'Comments')], (3.5, 1, ''))
+        self.assertEqual(self.row[slice('Text', 'Count')], ('Hello', 3.5, 1))
         self.assertEqual(self.row[slice('Score', 5, 2)], (3.5, ''))
 
 
@@ -201,6 +200,82 @@ class TestCSVModel(unittest.TestCase):
                 'filters': [bool],
                 'start': 2,
                 'stop': 3,
+                'expected': [
+                    ['Hello', 3.6, True, '', '99', True],
+                    ['Bye', 9.0, False, 'eh', '9.5', False],
+                    ['s', 3.14, True, 's', 'false', True],
+                    ['eee', 4.0, True, 'f', 'yes', False]
+                ]
+            }
+        ]
+
+        for idx, test in enumerate(tests):
+            casted_model = self.model.cast_range(test['filters'], test['start'], test['stop'])
+            errMsg = 'test case #{}'.format(idx)
+            self.assertCSVModelsAreEqual(casted_model, test['expected'], msg=errMsg)
+
+
+class TestCSVDictModel(TestCSVModel):
+    def setUp(self):
+        self.fieldnames = ['Greeting', 'Rating', 'Score', 'Comment', 'Something', 'eh']
+        self.data = [
+            ['Hello', '3.6', '1', '', '99', 'True'],
+            ['Bye', '9', '0', 'eh', '9.5', 'false'],
+            ['s', '3.14', '55', 's', 'false', 'yes'],
+            ['eee', '4', '88', 'f', 'yes', 'NO']
+        ]
+        self.model = CSVDictModel(self.fieldnames, self.data)
+
+    def test_cast_range_fieldnames(self):
+        tests = [
+            {
+                'filters': [int, float, len],
+                'start': 'Rating',
+                'stop': 'Comment',
+                'expected': [
+                    ['Hello', 3, 1.0, 0, '99', True],
+                    ['Bye', 9, 0.0, 2, '9.5', False],
+                    ['s', 3, 55.0, 1, 'false', True],
+                    ['eee', 4, 88.0, 1, 'yes', False]
+                ]
+            },
+            {
+                'filters': [str]*6,
+                'start': 'Greeting',
+                'stop': None,
+                'expected': [
+                    ['Hello', '3.6', '1', '', '99', 'True'],
+                    ['Bye', '9.0', '0', 'eh', '9.5', 'False'],
+                    ['s', '3.14', '55', 's', 'false', 'True'],
+                    ['eee', '4.0', '88', 'f', 'yes', 'False']
+                ]
+            },
+            {
+                'filters': [lambda x:x[1], int],
+                'start': 'Something',
+                'stop': None,
+                'expected': [
+                    ['Hello', 3.6, 1, '', '9', 1],
+                    ['Bye', 9.0, 0, 'eh', '.', 0],
+                    ['s', 3.14, 55, 's', 'a', 1],
+                    ['eee', 4.0, 88, 'f', 'e', 0]
+                ]
+            },
+            {
+                'filters': [lambda x:str(x)[-1], int],
+                'start': None,
+                'stop': 'Rating',
+                'expected': [
+                    ['o', 3, 1, '', '99', True],
+                    ['e', 9, 0, 'eh', '9.5', False],
+                    ['s', 3, 55, 's', 'false', True],
+                    ['e', 4, 88, 'f', 'yes', False]
+                ]
+            },
+            {
+                'filters': [bool],
+                'start': 'Score',
+                'stop': 'Score',
                 'expected': [
                     ['Hello', 3.6, True, '', '99', True],
                     ['Bye', 9.0, False, 'eh', '9.5', False],
