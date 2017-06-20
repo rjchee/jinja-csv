@@ -13,8 +13,12 @@ class CSVRow(object):
     def __len__(self):
         return len(self.data)
 
-    def _getindex(self, i):
-        return len(self) if i is None else i
+    def _getslice(self, start, end):
+        if start is None:
+            start = 0
+        if end is None:
+            end = len(self)
+        return slice(start, end)
 
     def __getitem__(self, idx):
         if isinstance(idx, (int, slice)):
@@ -49,11 +53,21 @@ class CSVDictRow(CSVRow):
         self.fieldnames = fieldnames
 
     def _getindex(self, i):
-        if i is None:
-            return len(self)
         if isinstance(i, int):
             return i
         return self._idx_map.get(i, len(self))
+
+    def _getslice(self, start, end, step=None):
+        if start is None:
+            start = 0
+        else:
+            start = self._getindex(start)
+        if end is None:
+            end = len(self)
+        else:
+            end = self._getindex(end)
+        return slice(start, end, step)
+
 
     def __getitem__(self, idx):
         if isinstance(idx, str):
@@ -69,9 +83,7 @@ class CSVDictRow(CSVRow):
             raise TypeError(msg)
         if idx.step is not None and not isinstance(idx.step, int):
             raise TypeError('slice indices must be integers or None or have an __index__ method')
-        start = 0 if idx.start is None else self._getindex(idx.start)
-        stop = self._getindex(idx.stop)
-        return self.data[start:stop:idx.step]
+        return self.data[self._getslice(idx.start, idx.stop, idx.step)]
 
     def cast(self, filters):
         if not filters:
@@ -137,13 +149,12 @@ class CSVModel:
             raise ValueError(('number of given types ({}) should match '
                               'number of columns ({})!').format(len(types), max_len))
 
-        self._rows = []
+        new_rows = []
         for row in rows:
             new_row = [t(row[i]) if i < len(row) else t() for i, t in enumerate(types)]
-            self._rows.append(self._init_row(new_row))
-        self._cols = []
-        for i in range(max_len):
-            self._cols.append(self._init_col(i))
+            new_rows.append(self._init_row(new_row))
+        self._rows = tuple(new_rows)
+        self._cols = tuple(self._init_col(i) for i in range(max_len))
         self.num_cols = max_len
         self.num_rows = len(rows)
         self.types = types
@@ -165,8 +176,8 @@ class CSVModel:
         rangelen = len(csvrow[start:end])
         if rangelen != filterlen:
             raise ValueError('Number of filters ({}) should match number of columns ({})!'.format(filterlen, rangelen))
-        new_filters = tuple(types)
-        new_filters[csvrow._getindex(start):csvrow._getindex(end)] = filters
+        new_filters = list(self.types)
+        new_filters[csvrow._getslice(start, end)] = filters
         return self.cast(new_filters)
 
     def __iter__(self):
@@ -179,13 +190,13 @@ class CSVModel:
         return reversed(self._rows)
 
     def rows(self):
-        return tuple(self._rows)
+        return self._rows
 
     def iterrows(self):
         return iter(self._rows)
 
     def cols(self):
-        return tuple(self._cols)
+        return self._cols
 
     def itercols(self):
         return iter(self._cols)

@@ -65,6 +65,7 @@ class TestCSVDictRow(TestCSVRow):
 
 
 class TestCSVColumn(unittest.TestCase):
+
     def setUp(self):
         self.data = list(range(5))
         self.col = CSVColumn(self.data)
@@ -109,19 +110,19 @@ class TestCSVModel(unittest.TestCase):
 
     def setUp(self):
         self.data = [
-            ['Hello', '3.5', '1', '', '99', 'True'],
+            ['Hello', '3.6', '1', '', '99', 'True'],
             ['Bye', '9', '0', 'eh', '9.5', 'false'],
             ['s', '3.14', '55', 's', 'false', 'yes'],
             ['eee', '4', '88', 'f', 'yes', 'NO']
         ]
         self.model = CSVModel(self.data)
 
-    def assertCSVModelsAreEqual(self, m1, m2):
-        self.assertEqual(getValueTypeList(m1), getValueTypeList(m2))
+    def assertCSVModelsAreEqual(self, m1, m2, msg=None):
+        self.assertEqual(getValueTypeList(m1), getValueTypeList(m2), msg=msg)
 
     def test_autocast(self):
         expected_results = [
-            ['Hello', 3.5, 1, '', '99', True],
+            ['Hello', 3.6, 1, '', '99', True],
             ['Bye', 9.0, 0, 'eh', '9.5', False],
             ['s', 3.14, 55, 's', 'false', True],
             ['eee', 4.0, 88, 'f', 'yes', False]
@@ -138,6 +139,81 @@ class TestCSVModel(unittest.TestCase):
         ]
         model = self.model.cast(filters)
         self.assertCSVModelsAreEqual(expected_results, model)
+
+    def test_cast_range(self):
+        tests = [
+            {
+                'filters': [int, float, len],
+                'start': 1,
+                'stop': 4,
+                'expected': [
+                    ['Hello', 3, 1.0, 0, '99', True],
+                    ['Bye', 9, 0.0, 2, '9.5', False],
+                    ['s', 3, 55.0, 1, 'false', True],
+                    ['eee', 4, 88.0, 1, 'yes', False]
+                ]
+            },
+            {
+                'filters': [str]*6,
+                'start': None,
+                'stop': None,
+                'expected': [
+                    ['Hello', '3.6', '1', '', '99', 'True'],
+                    ['Bye', '9.0', '0', 'eh', '9.5', 'False'],
+                    ['s', '3.14', '55', 's', 'false', 'True'],
+                    ['eee', '4.0', '88', 'f', 'yes', 'False']
+                ]
+            },
+            {
+                'filters': [str]*6,
+                'start': 0,
+                'stop': None,
+                'expected': [
+                    ['Hello', '3.6', '1', '', '99', 'True'],
+                    ['Bye', '9.0', '0', 'eh', '9.5', 'False'],
+                    ['s', '3.14', '55', 's', 'false', 'True'],
+                    ['eee', '4.0', '88', 'f', 'yes', 'False']
+                ]
+            },
+            {
+                'filters': [lambda x:x[1], int],
+                'start': 4,
+                'stop': None,
+                'expected': [
+                    ['Hello', 3.6, 1, '', '9', 1],
+                    ['Bye', 9.0, 0, 'eh', '.', 0],
+                    ['s', 3.14, 55, 's', 'a', 1],
+                    ['eee', 4.0, 88, 'f', 'e', 0]
+                ]
+            },
+            {
+                'filters': [lambda x:str(x)[-1], int],
+                'start': None,
+                'stop': 2,
+                'expected': [
+                    ['o', 3, 1, '', '99', True],
+                    ['e', 9, 0, 'eh', '9.5', False],
+                    ['s', 3, 55, 's', 'false', True],
+                    ['e', 4, 88, 'f', 'yes', False]
+                ]
+            },
+            {
+                'filters': [bool],
+                'start': 2,
+                'stop': 3,
+                'expected': [
+                    ['Hello', 3.6, True, '', '99', True],
+                    ['Bye', 9.0, False, 'eh', '9.5', False],
+                    ['s', 3.14, True, 's', 'false', True],
+                    ['eee', 4.0, True, 'f', 'yes', False]
+                ]
+            }
+        ]
+
+        for idx, test in enumerate(tests):
+            casted_model = self.model.cast_range(test['filters'], test['start'], test['stop'])
+            errMsg = 'test case #{}'.format(idx)
+            self.assertCSVModelsAreEqual(casted_model, test['expected'], msg=errMsg)
 
 if __name__ == '__main__':
     unittest.main()
