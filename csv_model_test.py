@@ -1,3 +1,5 @@
+import csv
+import tempfile
 import unittest
 
 from csv_model import CSVRow
@@ -128,6 +130,15 @@ class TestCSVModel(unittest.TestCase):
         ]
         self.assertCSVModelsAreEqual(expected_results, self.model)
 
+    def test_from_file(self):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            writer = csv.writer(f)
+            writer.writerows(self.data)
+            f.close()
+            file_model = CSVModel.from_file(f.name)
+            self.assertCSVModelsAreEqual(file_model, self.model)
+            self.assertTrue(f.closed)
+
     def test_cast(self):
         filters = [str, bool, float, len, lambda x:str(x)[0], int]
         expected_results = [
@@ -225,6 +236,20 @@ class TestCSVDictModel(TestCSVModel):
             ['eee', '4', '88', 'f', 'yes', 'NO']
         ]
         self.model = CSVDictModel(self.fieldnames, self.data)
+
+
+    def test_from_file(self):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+            writer = csv.DictWriter(f, self.fieldnames)
+            writer.writeheader()
+            rows = [dict(zip(self.fieldnames, row)) for row in self.data]
+            writer.writerows(rows)
+            f.close()
+            file_model = CSVDictModel.from_file(f.name)
+            self.assertCSVModelsAreEqual(file_model, self.model)
+            self.assertEqual(file_model.fieldnames, self.model.fieldnames)
+            self.assertTrue(f.closed)
+
 
     def test_cast_range_fieldnames(self):
         tests = [
