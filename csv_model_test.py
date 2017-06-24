@@ -224,6 +224,21 @@ class TestCSVModel(unittest.TestCase):
             errMsg = 'test case #{}'.format(idx)
             self.assertCSVModelsAreEqual(casted_model, test['expected'], msg=errMsg)
 
+    def test_row_slice(self):
+        expected_results = [
+            ['Bye', 9.0, 0, 'eh', '9.5', False],
+            ['s', 3.14, 55, 's', 'false', True]
+        ]
+        self.assertCSVModelsAreEqual(self.model.row_slice(1, 3), expected_results)
+
+    def test_col_slice(self):
+        expected_results = [
+            [1, ''],
+            [0, 'eh'],
+            [55, 's'],
+            [88, 'f']
+        ]
+        self.assertCSVModelsAreEqual(self.model.col_slice(2, 4), expected_results)
 
 class TestCSVDictModel(TestCSVModel):
     def setUp(self):
@@ -312,6 +327,16 @@ class TestCSVDictModel(TestCSVModel):
             casted_model = self.model.cast_range(test['filters'], test['start'], test['stop'])
             errMsg = 'test case #{}'.format(idx)
             self.assertCSVModelsAreEqual(casted_model, test['expected'], msg=errMsg)
+
+    def test_col_slice(self):
+        super(TestCSVDictModel, self).test_col_slice()
+        expected_results = [
+            [1, ''],
+            [0, 'eh'],
+            [55, 's'],
+            [88, 'f']
+        ]
+        self.assertCSVModelsAreEqual(self.model.col_slice('Score', 'Comment'), expected_results)
 
 if __name__ == '__main__':
     unittest.main()

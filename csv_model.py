@@ -122,9 +122,9 @@ def cast_to_bool(s=None):
     if s is None:
         return False
     if isinstance(s, str):
-        if s.lower() in ['true', 'yes']:
+        if s.lower() in ['true', 'yes', 'y']:
             return True
-        elif s.lower() in ['false', 'no']:
+        elif s.lower() in ['false', 'no', 'n']:
             return False
     else:
         return bool(s)
@@ -133,6 +133,7 @@ def cast_to_bool(s=None):
 
 class CSVModel:
     def __init__(self, rows, types=None):
+        rows = tuple(rows)
         max_len = max(map(len, rows))
         if types is None:
             casts = [int, float, cast_to_bool]
@@ -193,11 +194,17 @@ class CSVModel:
     def rows(self):
         return self._rows
 
+    def row_slice(self, start, end):
+        return CSVModel(self._rows[start:end], types=self.types)
+
     def iterrows(self):
         return iter(self._rows)
 
     def cols(self):
         return self._cols
+
+    def col_slice(self, start, end):
+        return CSVModel((row[start:end] for row in self._rows), types=self.types[start:end])
 
     def itercols(self):
         return iter(self._cols)
@@ -206,13 +213,15 @@ class CSVModel:
     def from_file(cls, filename):
         with open(filename) as csvfile:
             reader = csv.reader(csvfile)
-            return cls(tuple(reader))
+            return cls(reader)
 
 
 class CSVDictModel(CSVModel):
     def __init__(self, fieldnames, rows, types=None):
         self.fieldnames = fieldnames
         super().__init__(rows, types=types)
+        if not self._rows:
+            raise ValueError('rows cannot be empty!')
 
     def _init_row(self, row):
         return CSVDictRow(self.fieldnames, row)
@@ -222,6 +231,14 @@ class CSVDictModel(CSVModel):
 
     def cast(self, filters):
         return CSVDictModel(self.fieldnames, self._rows, types=tuple(filters))
+
+    def row_slice(self, start, end):
+        return CSVDictModel(self.fieldnames, self._rows[start:end], types=self.types)
+
+    def col_slice(self, start, end):
+        s = self._rows[0]._getslice(start, end)
+        return CSVDictModel(self.fieldnames[s], (row[s] for row in self._rows),
+                            types=self.types[s])
 
     @classmethod
     def from_file(cls, filename):
