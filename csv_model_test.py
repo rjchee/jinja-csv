@@ -131,13 +131,12 @@ class TestCSVModel(unittest.TestCase):
         self.assertCSVModelsAreEqual(expected_results, self.model)
 
     def test_from_file(self):
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode='w') as f:
             writer = csv.writer(f)
             writer.writerows(self.data)
-            f.close()
+            f.flush()
             file_model = CSVModel.from_file(f.name)
             self.assertCSVModelsAreEqual(file_model, self.model)
-            self.assertTrue(f.closed)
 
     def test_cast(self):
         filters = [str, bool, float, len, lambda x:str(x)[0], int]
@@ -239,16 +238,15 @@ class TestCSVDictModel(TestCSVModel):
 
 
     def test_from_file(self):
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode='w') as f:
             writer = csv.DictWriter(f, self.fieldnames)
             writer.writeheader()
             rows = [dict(zip(self.fieldnames, row)) for row in self.data]
             writer.writerows(rows)
-            f.close()
+            f.flush()
             file_model = CSVDictModel.from_file(f.name)
             self.assertCSVModelsAreEqual(file_model, self.model)
             self.assertEqual(file_model.fieldnames, self.model.fieldnames)
-            self.assertTrue(f.closed)
 
 
     def test_cast_range_fieldnames(self):
