@@ -1,4 +1,6 @@
 import csv
+import itertools
+import time
 
 class CSVRow(object):
     def __init__(self, row):
@@ -130,7 +132,6 @@ def cast_to_bool(s=None):
         return bool(s)
     raise ValueError()
 
-
 class CSVModel:
     def __init__(self, rows, types=None):
         rows = tuple(rows)
@@ -210,10 +211,15 @@ class CSVModel:
         return iter(self._cols)
 
     @classmethod
-    def from_file(cls, filename):
+    def from_file(cls, filename, types=None):
         with open(filename) as csvfile:
             reader = csv.reader(csvfile)
-            return cls(reader)
+            if types is None:
+                return cls(reader)
+            rows = []
+            for row in reader:
+                rows.append([cast(item) for cast, item in itertools.zip_longest(types, row)])
+            return cls(rows, types=types)
 
 
 class CSVDictModel(CSVModel):
@@ -241,12 +247,19 @@ class CSVDictModel(CSVModel):
                             types=self.types[s])
 
     @classmethod
-    def from_file(cls, filename):
+    def from_file(cls, filename, types=None):
         with open(filename) as csvfile:
             reader = csv.DictReader(csvfile)
             rows = []
+            if types is None:
+                for row in reader:
+                    rows.append(tuple(row[field] for field in reader.fieldnames))
+                return cls(reader.fieldnames, rows)
             for row in reader:
-                rows.append(tuple(row[field] for field in reader.fieldnames))
-            return cls(reader.fieldnames, rows)
+                row_data = []
+                for cast, field in itertools.zip_longest(types, reader.fieldnames):
+                    row_data.append(cast(row[field]))
+                rows.append(row_data)
+            return cls(reader.fieldnames, rows, types=types)
 
 
