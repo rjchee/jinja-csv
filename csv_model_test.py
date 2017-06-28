@@ -2,6 +2,7 @@ import csv
 import tempfile
 import unittest
 
+from csv_model import cast_to_bool
 from csv_model import CSVRow
 from csv_model import CSVDictRow
 from csv_model import CSVColumn
@@ -138,6 +139,21 @@ class TestCSVModel(unittest.TestCase):
             file_model = CSVModel.from_file(f.name)
             self.assertCSVModelsAreEqual(file_model, self.model)
 
+    def test_from_file_with_types(self):
+        types = [str, float, int, bool, str, cast_to_bool]
+        expected_results = [
+            ['Hello', 3.6, 1, False, '99', True],
+            ['Bye', 9.0, 0, True, '9.5', False],
+            ['s', 3.14, 55, True, 'false', True],
+            ['eee', 4.0, 88, True, 'yes', False],
+        ]
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            writer = csv.writer(f)
+            writer.writerows(self.data)
+            f.flush()
+            file_model = CSVModel.from_file(f.name, types=types)
+            self.assertCSVModelsAreEqual(file_model, expected_results)
+
     def test_cast(self):
         filters = [str, bool, float, len, lambda x:str(x)[0], int]
         expected_results = [
@@ -263,6 +279,22 @@ class TestCSVDictModel(TestCSVModel):
             self.assertCSVModelsAreEqual(file_model, self.model)
             self.assertEqual(file_model.fieldnames, self.model.fieldnames)
 
+    def test_from_file_with_types(self):
+        types = [str, float, int, bool, str, cast_to_bool]
+        expected_results = [
+            ['Hello', 3.6, 1, False, '99', True],
+            ['Bye', 9.0, 0, True, '9.5', False],
+            ['s', 3.14, 55, True, 'false', True],
+            ['eee', 4.0, 88, True, 'yes', False],
+        ]
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            writer = csv.DictWriter(f, self.fieldnames)
+            writer.writeheader()
+            rows = [dict(zip(self.fieldnames, row)) for row in self.data]
+            writer.writerows(rows)
+            f.flush()
+            file_model = CSVDictModel.from_file(f.name, types=types)
+            self.assertCSVModelsAreEqual(file_model, expected_results)
 
     def test_cast_range_fieldnames(self):
         tests = [
