@@ -1,6 +1,6 @@
 import csv
 import itertools
-import time
+from dateutil import parser
 
 class CSVRow(object):
     def __init__(self, row):
