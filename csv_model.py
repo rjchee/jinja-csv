@@ -130,9 +130,9 @@ def cast_to_bool(s=None):
             return True
         elif s.lower() in ['false', 'no', 'n']:
             return False
+        raise ValueError()
     else:
         return bool(s)
-    raise ValueError()
 
 def cast_to_date(d=None):
     if d is None:

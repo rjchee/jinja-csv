@@ -101,8 +101,10 @@ class TestCSVColumn(unittest.TestCase):
 
 class TestCastFunctions(unittest.TestCase):
     def test_cast_to_bool(self):
-        data = [None, 'true', 'TRUE', 'YES', 'Y', 'y', 'Yes', 'FALSE', 'False', 'NO', 'n', 'N']
-        expected = [False, True, True, True, True, True, True, False, False, False, False, False]
+        data = [None, 'true', 'TRUE', 'YES', 'Y', 'y', 'Yes', 'FALSE', 'False', 'NO', 'n', 'N',
+                0, 1, [], ['f']]
+        expected = [False, True, True, True, True, True, True, False, False, False, False, False,
+                False, True, False, True]
         self.assertEqual(len(data), len(expected),
                          msg='# of test cases should match # of expected outcomes')
         for test_case, expect in zip(data, expected):
