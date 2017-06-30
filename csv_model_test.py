@@ -2,12 +2,7 @@ import csv
 import tempfile
 import unittest
 
-from csv_model import cast_to_bool
-from csv_model import CSVRow
-from csv_model import CSVDictRow
-from csv_model import CSVColumn
-from csv_model import CSVModel
-from csv_model import CSVDictModel
+from csv_model import *
 
 class TestCSVRow(unittest.TestCase):
 
@@ -102,6 +97,16 @@ class TestCSVColumn(unittest.TestCase):
         self.assertEqual(self.col, range(5))
         self.assertNotEqual(self.col, range(6))
         self.assertNotEqual(self.col, [0, 3, 1, 2, 4])
+
+
+class TestCastFunctions(unittest.TestCase):
+    def test_cast_to_bool(self):
+        data = [None, 'true', 'TRUE', 'YES', 'Y', 'y', 'Yes', 'FALSE', 'False', 'NO', 'n', 'N']
+        expected = [False, True, True, True, True, True, True, False, False, False, False, False]
+        self.assertEqual(len(data), len(expected),
+                         msg='# of test cases should match # of expected outcomes')
+        for test_case, expect in zip(data, expected):
+            self.assertEqual(cast_to_bool(test_case), expect)
 
 
 def getValueTypeList(rows):

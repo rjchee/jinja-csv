@@ -1,6 +1,8 @@
 import csv
 import itertools
-from dateutil import parser
+from datetime import datetime
+
+import dateutil.parser
 
 class CSVRow(object):
     def __init__(self, row):
@@ -132,12 +134,22 @@ def cast_to_bool(s=None):
         return bool(s)
     raise ValueError()
 
+def cast_to_date(d=None):
+    if d is None:
+        d = 0
+    if isinstance(d, str):
+        return dateutil.parser.parse(d)
+    if isinstance(d, int):
+        return datetime.fromtimestamp(d)
+    raise ValueError()
+
+
 class CSVModel:
     def __init__(self, rows, types=None):
         rows = tuple(rows)
         max_len = max(map(len, rows))
         if types is None:
-            casts = [int, float, cast_to_bool]
+            casts = [int, float, cast_to_bool, cast_to_date]
             types = [str]*max_len
             for i in range(max_len):
                 # try to find the most specific cast
