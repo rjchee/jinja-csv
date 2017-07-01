@@ -110,6 +110,12 @@ class TestCastFunctions(unittest.TestCase):
         for test_case, expect in zip(data, expected):
             self.assertEqual(cast_to_bool(test_case), expect)
 
+    def test_cast_to_bool_error(self):
+        data = ['eh', 'nyes', 'yo', 'yno']
+        for test_case in data:
+            with self.assertRaises(ValueError):
+                cast_to_bool(test_case)
+
 
 def getValueTypeList(rows):
     return list((item, type(item)) for row in rows for item in row)
