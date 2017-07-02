@@ -116,6 +116,15 @@ class TestCastFunctions(unittest.TestCase):
             with self.assertRaises(ValueError):
                 cast_to_bool(test_case)
 
+    def test_cast_to_date(self):
+        day = datetime(2017, 7, 2, 0, 0, 0)
+        data = [None, '7/2/2017', '07/02/2017', '7/2/2017 0:00:00', '2017-07-02', 100]
+        expected = [datetime.fromtimestamp(0), day, day, day, day, datetime.fromtimestamp(100)]
+        self.assertEqual(len(data), len(expected),
+                         msg='# of test cases should match # of expected outcomes')
+        for test_case, expect in zip(data, expected):
+            self.assertEqual(cast_to_date(test_case), expect)
+
 
 def getValueTypeList(rows):
     return list((item, type(item)) for row in rows for item in row)
