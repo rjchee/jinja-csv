@@ -125,6 +125,12 @@ class TestCastFunctions(unittest.TestCase):
         for test_case, expect in zip(data, expected):
             self.assertEqual(cast_to_date(test_case), expect)
 
+    def test_cast_to_date_error(self):
+        data = [[], 'Time abcdefg', "2000000 o'clock", '2017/04/03/01/02/03/04', '2017-04-03-99-01', '']
+        for test_case in data:
+            with self.assertRaises(ValueError, msg=test_case):
+                cast_to_date(test_case)
+
 
 def getValueTypeList(rows):
     return list((item, type(item)) for row in rows for item in row)
