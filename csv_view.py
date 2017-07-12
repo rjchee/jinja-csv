@@ -25,7 +25,7 @@ class CSVJinjaView:
             'castrange': self.cast_range,
             'rowrange': row_range,
             'columnrange': column_range,
-            # 'getcolumns': columns, TODO: add API for this method
+            'getcolumns': columns,
             'sortedby': sortedby,
             'bool': cast_to_bool,
             'date': cast_to_date,
@@ -54,9 +54,10 @@ def column_range(rows, start=None, end=None):
     return rows.col_slice(start, end)
 
 def columns(rows, column_list=None):
+    cols = rows.cols()
     if column_list is None:
-        return rows.cols()
-    return # TODO: complete
+        return cols
+    return [cols[idx] for idx in column_list]
 
 def sortedby(rows, sortkeys):
     def keyfunc(row):
