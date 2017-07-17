@@ -10,12 +10,12 @@ class TestViewFilters(unittest.TestCase):
         self.view = CSVJinjaView(options={'loader': FunctionLoader(lambda x:x)})
 
     def test_bool(self):
-        data = ['{{ "yes" | bool }}', '{{ "no" | bool }}', '{{ "True" | bool }}',
-                     '{{ "y" | bool }}', '{{ "false" | bool }}']
-        expected = ['True', 'False', 'True', 'True', 'False']
+        data = ['yes', 'no', 'True', 'y', 'false', 'N', 'TrUE']
+        expected = ['True', 'False', 'True', 'True', 'False', 'False', 'True']
         self.assertEqual(len(data), len(expected),
                          msg='# of test cases should match # of expected outcomes')
-        for template , val in zip(data, expected):
+        for test_data, val in zip(data, expected):
+            template = '{{ ' + repr(test_data) + ' | bool }}'
             self.assertEqual(val, self.view.render_jinja_template(template, None))
 
 if __name__ == '__main__':
