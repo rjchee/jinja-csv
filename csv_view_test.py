@@ -9,7 +9,7 @@ from csv_view import *
 class TestViewFilters(unittest.TestCase):
 
     def setUp(self):
-        self.view = CSVJinjaView(options={'loader': FunctionLoader(lambda x:x)})
+        self.view = CSVJinjaView(env_options={'loader': FunctionLoader(lambda x:x)})
 
     def test_bool(self):
         data = ['yes', 'no', 'True', 'y', 'false', 'N', 'TrUE']
@@ -31,6 +31,23 @@ class TestViewFilters(unittest.TestCase):
         for test_data, val in zip(data, expected):
             template = '{{ ' + repr(test_data) + ' | date }}'
             self.assertEqual(str(val), self.view.render_jinja_template(template, None))
+
+    def test_date_from_timestamp(self):
+        data = ['1000', '0', '1', '1931516412']
+        for test_data in data:
+            template = '{{ ' + str(test_data) + ' | int | date }}'
+            expected = str(datetime.fromtimestamp(int(test_data)))
+            self.assertEqual(expected, self.view.render_jinja_template(template, None))
+
+    def test_dateformat(self):
+        date = '2017-07-18'
+        formats = ['%d/%m/%y', '%Y-%d-%m', '%y']
+        expected = ['18/07/17', '2017-18-07', '17']
+        self.assertEqual(len(formats), len(expected),
+                         msg='# of test cases should match # of expected outcomes')
+        for fmt, val in zip(formats, expected):
+            template = '{{ ' + repr(date) + ' | date | dateformat(' + repr(fmt) + ') }}'
+            self.assertEqual(val, self.view.render_jinja_template(template, None))
 
 
 if __name__ == '__main__':

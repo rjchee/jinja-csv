@@ -137,10 +137,10 @@ def cast_to_bool(s=None):
 def cast_to_date(d=None, parserinfo=None, **kwargs):
     if d is None:
         d = 0
-    try:
+    if isinstance(d, str):
         return dateutil.parser.parse(d, parserinfo=parserinfo, **kwargs)
-    except Exception:
-        return datetime.fromtimestamp(int(d))
+    if isinstance(d, int):
+        return datetime.fromtimestamp(d)
     raise ValueError()
 
 

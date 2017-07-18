@@ -5,17 +5,22 @@ from csv_model import cast_to_date
 
 
 class CSVJinjaView:
-    def __init__(self, env=None, template_path=None, options=None):
+    def __init__(self, env=None, template_path=None, env_options=None, view_options=None):
         if env is None:
-            if options is None:
-                options = {}
-            if 'trim_blocks' not in options:
-                options['trim_blocks'] = True
-            if 'lstrip_blocks' not in options:
-                options['lstrip_blocks'] = True
-            if 'loader' not in options:
-                options['loader'] = jinja2.FileSystemLoader([os.getcwd() if template_path is None else template_path, os.path.realpath(__file__)])
-            env = jinja2.Environment(**options)
+            if env_options is None:
+                env_options = {}
+            if 'trim_blocks' not in env_options:
+                env_options['trim_blocks'] = True
+            if 'lstrip_blocks' not in env_options:
+                env_options['lstrip_blocks'] = True
+            if 'loader' not in env_options:
+                env_options['loader'] = jinja2.FileSystemLoader([os.getcwd() if template_path is None else template_path, os.path.realpath(__file__)])
+            env = jinja2.Environment(**env_options)
+        if view_options is None:
+            view_options = {
+                'default_datetime_fmt': '%D',
+            }
+        self.default_datetime_fmt = view_options['default_datetime_fmt']
         self.env = env
         self._register_filters()
 
@@ -29,6 +34,7 @@ class CSVJinjaView:
             'sortedby': sortedby,
             'bool': cast_to_bool,
             'date': cast_to_date,
+            'dateformat': self.dateformat,
         }
         self.env.filters.update(filters)
 
@@ -46,6 +52,8 @@ class CSVJinjaView:
     def cast_range(self, rows, filters, start=None, end=None):
         return rows.cast_range(list(self.env.filters[f] for f in filters), start, end)
 
+    def dateformat(self, dt, fmt=None):
+        return dt.strftime(fmt or self.default_datetime_fmt)
 
 def row_range(rows, start=None, end=None):
     return rows.row_slice(start, end)
