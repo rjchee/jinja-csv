@@ -1,6 +1,6 @@
 import csv
 import itertools
-from datetime import datetime
+import datetime
 
 import dateutil.parser
 
@@ -137,10 +137,12 @@ def cast_to_bool(s=None):
 def cast_to_date(d=None, parserinfo=None, **kwargs):
     if d is None:
         d = 0
+    if isinstance(d, datetime.date):
+        return d
     if isinstance(d, str):
         return dateutil.parser.parse(d, parserinfo=parserinfo, **kwargs)
     if isinstance(d, int):
-        return datetime.fromtimestamp(d)
+        return datetime.datetime.fromtimestamp(d)
     raise ValueError()
 
 
@@ -203,6 +205,9 @@ class CSVModel:
 
     def __reversed__(self):
         return reversed(self._rows)
+
+    def __str__(self):
+        return '\n'.join(' '.join(map(str, row)) for row in self._rows)
 
     def rows(self):
         return self._rows

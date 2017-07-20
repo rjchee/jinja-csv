@@ -47,7 +47,7 @@ class CSVJinjaView:
         return list((row[rowkey], template.render(row=row, fieldnames=model.fieldnames, **kwargs)) for row in model)
 
     def cast(self, rows, filters):
-        return rows.cast(list(self.env.filters[f] for f in filters))
+        return rows.cast(list(self.env.filters.get(f, str) for f in filters))
 
     def cast_range(self, rows, filters, start=None, end=None):
         return rows.cast_range(list(self.env.filters[f] for f in filters), start, end)

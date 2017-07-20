@@ -1,8 +1,15 @@
 import csv
+from datetime import datetime
 import tempfile
 import unittest
 
-from csv_model import *
+from csv_model import CSVRow
+from csv_model import CSVDictRow
+from csv_model import CSVModel
+from csv_model import CSVDictModel
+from csv_model import CSVColumn
+from csv_model import cast_to_bool
+from csv_model import cast_to_date
 
 class TestCSVRow(unittest.TestCase):
 
@@ -102,9 +109,9 @@ class TestCSVColumn(unittest.TestCase):
 class TestCastFunctions(unittest.TestCase):
     def test_cast_to_bool(self):
         data = [None, 'true', 'TRUE', 'YES', 'Y', 'y', 'Yes', 'FALSE', 'False', 'NO', 'n', 'N',
-                0, 1, [], ['f']]
+                0, 1, [], ['f'], True, False]
         expected = [False, True, True, True, True, True, True, False, False, False, False, False,
-                False, True, False, True]
+                False, True, False, True, True, False]
         self.assertEqual(len(data), len(expected),
                          msg='# of test cases should match # of expected outcomes')
         for test_case, expect in zip(data, expected):
@@ -118,8 +125,8 @@ class TestCastFunctions(unittest.TestCase):
 
     def test_cast_to_date(self):
         day = datetime(2017, 7, 2, 0, 0, 0)
-        data = [None, '7/2/2017', '07/02/2017', '7/2/2017 0:00:00', '2017-07-02', 100]
-        expected = [datetime.fromtimestamp(0), day, day, day, day, datetime.fromtimestamp(100)]
+        data = [None, '7/2/2017', '07/02/2017', '7/2/2017 0:00:00', '2017-07-02', 100, day]
+        expected = [datetime.fromtimestamp(0), day, day, day, day, datetime.fromtimestamp(100), day]
         self.assertEqual(len(data), len(expected),
                          msg='# of test cases should match # of expected outcomes')
         for test_case, expect in zip(data, expected):

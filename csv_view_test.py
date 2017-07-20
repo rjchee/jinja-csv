@@ -4,12 +4,19 @@ import unittest
 from dateutil import parser
 from jinja2 import FunctionLoader
 
-from csv_view import *
+from csv_model import CSVModel, cast_to_date
+from csv_view import CSVJinjaView
 
 class TestViewFilters(unittest.TestCase):
 
     def setUp(self):
         self.view = CSVJinjaView(env_options={'loader': FunctionLoader(lambda x:x)})
+        self.data = [
+            ['1', 'hi', 'yes', '2017-07-19', '3.5'],
+            ['2', 'bye', 'no', '2017-07-18', '3.6'],
+            ['3', 'heh', 'y', '2017-07-20', '3.7'],
+        ]
+        self.model = CSVModel(self.data)
 
     def test_bool(self):
         data = ['yes', 'no', 'True', 'y', 'false', 'N', 'TrUE']
@@ -48,6 +55,11 @@ class TestViewFilters(unittest.TestCase):
         for fmt, val in zip(formats, expected):
             template = '{{ ' + repr(date) + ' | date | dateformat(' + repr(fmt) + ') }}'
             self.assertEqual(val, self.view.render_jinja_template(template, None))
+
+    def test_cast(self):
+        template = '{{ rows | cast(["date", None, "int", "date", "bool"]) }}'
+        expected = str(self.model.cast([cast_to_date, str, int, cast_to_date, bool]))
+        self.assertEqual(expected, self.view.render_jinja_template(template, self.model))
 
 
 if __name__ == '__main__':
