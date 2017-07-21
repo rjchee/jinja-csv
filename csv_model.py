@@ -207,7 +207,7 @@ class CSVModel:
         return reversed(self._rows)
 
     def __str__(self):
-        return '\n'.join(' '.join(map(str, row)) for row in self._rows)
+        return '\n'.join(map(str, self._rows))
 
     def rows(self):
         return self._rows
@@ -241,10 +241,13 @@ class CSVModel:
 
 class CSVDictModel(CSVModel):
     def __init__(self, fieldnames, rows, types=None):
-        self.fieldnames = fieldnames
+        self.fieldnames = tuple(fieldnames)
         super().__init__(rows, types=types)
         if not self._rows:
             raise ValueError('rows cannot be empty!')
+
+    def __str__(self):
+        return '\n'.join(map(str, itertools.chain([self.fieldnames], self._rows)))
 
     def _init_row(self, row):
         return CSVDictRow(self.fieldnames, row)
@@ -278,5 +281,3 @@ class CSVDictModel(CSVModel):
                     row_data.append(cast(row[field]))
                 rows.append(row_data)
             return cls(reader.fieldnames, rows, types=types)
-
-

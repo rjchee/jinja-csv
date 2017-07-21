@@ -291,6 +291,13 @@ class TestCSVModel(unittest.TestCase):
         ]
         self.assertCSVModelsAreEqual(self.model.col_slice(2, 4), expected_results)
 
+    def test_str(self):
+        expected = "('Hello', 3.6, 1, '', '99', True)\n" \
+            "('Bye', 9.0, 0, 'eh', '9.5', False)\n" \
+            "('s', 3.14, 55, 's', 'false', True)\n" \
+            "('eee', 4.0, 88, 'f', 'yes', False)"
+        self.assertEqual(expected, str(self.model))
+
 class TestCSVDictModel(TestCSVModel):
     def setUp(self):
         self.fieldnames = ['Greeting', 'Rating', 'Score', 'Comment', 'Something', 'eh']
@@ -404,6 +411,15 @@ class TestCSVDictModel(TestCSVModel):
             [88, 'f']
         ]
         self.assertCSVModelsAreEqual(self.model.col_slice('Score', 'Comment'), expected_results)
+
+    def test_str(self):
+        expected = "('Greeting', 'Rating', 'Score', 'Comment', 'Something', 'eh')\n" \
+            "('Hello', 3.6, 1, '', '99', True)\n" \
+            "('Bye', 9.0, 0, 'eh', '9.5', False)\n" \
+            "('s', 3.14, 55, 's', 'false', True)\n" \
+            "('eee', 4.0, 88, 'f', 'yes', False)"
+        self.assertEqual(expected, str(self.model))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -50,7 +50,7 @@ class CSVJinjaView:
         return rows.cast(list(self.env.filters.get(f, str) for f in filters))
 
     def cast_range(self, rows, filters, start=None, end=None):
-        return rows.cast_range(list(self.env.filters[f] for f in filters), start, end)
+        return rows.cast_range(list(self.env.filters.get(f, str) for f in filters), start, end)
 
     def dateformat(self, dt, fmt=None):
         return dt.strftime(fmt or self.default_datetime_fmt)
