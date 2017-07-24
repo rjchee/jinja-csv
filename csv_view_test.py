@@ -66,6 +66,11 @@ class TestViewFilters(unittest.TestCase):
         expected = str(self.model.cast_range([float, str, int], 0, 3))
         self.assertEqual(expected, self.view.render_jinja_template(template, self.model))
 
+    def test_rowrange(self):
+        template = '{{ rows | rowrange(1) }}'
+        expected = str(self.model.row_slice(1))
+        self.assertEqual(expected, self.view.render_jinja_template(template, self.model))
+
 
 if __name__ == '__main__':
     unittest.main()

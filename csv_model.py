@@ -212,7 +212,7 @@ class CSVModel:
     def rows(self):
         return self._rows
 
-    def row_slice(self, start, end):
+    def row_slice(self, start=None, end=None):
         return CSVModel(self._rows[start:end], types=self.types)
 
     def iterrows(self):
@@ -221,7 +221,7 @@ class CSVModel:
     def cols(self):
         return self._cols
 
-    def col_slice(self, start, end):
+    def col_slice(self, start=None, end=None):
         return CSVModel((row[start:end] for row in self._rows), types=self.types[start:end])
 
     def itercols(self):
